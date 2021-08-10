@@ -33,31 +33,50 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 public class TcpSourceProperties {
 
-	/**
-	 * The decoder to use when receiving messages.
-	 */
-	private Encoding decoder = Encoding.CRLF;
+    /**
+     * The decoder to use when receiving messages.
+     */
+    private Encoding decoder = Encoding.CRLF;
 
-	/**
-	 * The buffer size used when decoding messages; larger messages will be rejected.
-	 */
-	private int bufferSize = 2048;
+    /**
+     * The buffer size used when decoding messages; larger messages will be rejected.
+     */
+    private int bufferSize = 2048;
 
-	@NotNull
-	public Encoding getDecoder() {
-		return this.decoder;
-	}
+    private boolean bounceBackServer = true;
 
-	public void setDecoder(Encoding decoder) {
-		this.decoder = decoder;
-	}
+    private String bounceBackMessage = "ACK";
 
-	public int getBufferSize() {
-		return bufferSize;
-	}
+    @NotNull
+    public Encoding getDecoder() {
+        return this.decoder;
+    }
 
-	public void setBufferSize(int bufferSize) {
-		this.bufferSize = bufferSize;
-	}
+    public void setDecoder(Encoding decoder) {
+        this.decoder = decoder;
+    }
 
+    public int getBufferSize() {
+        return bufferSize;
+    }
+
+    public void setBufferSize(int bufferSize) {
+        this.bufferSize = bufferSize;
+    }
+
+    public boolean isBounceBackServer() {
+        return bounceBackServer;
+    }
+
+    public void setBounceBackServer(boolean bounceBackServer) {
+        this.bounceBackServer = bounceBackServer;
+    }
+
+    public String getBounceBackMessage() {
+        return bounceBackMessage;
+    }
+
+    public void setBounceBackMessage(String bounceBackMessage) {
+        this.bounceBackMessage = bounceBackMessage;
+    }
 }

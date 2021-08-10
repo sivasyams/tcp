@@ -20,11 +20,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.stream.annotation.EnableBinding;
-import org.springframework.cloud.stream.app.tcp.TcpConnectionFactoryProperties;
 import org.springframework.cloud.stream.app.tcp.EncoderDecoderFactoryBean;
+import org.springframework.cloud.stream.app.tcp.TcpConnectionFactoryProperties;
+import org.springframework.cloud.stream.app.tcp.source.bounceback.TcpCustomConnectionFactoryBean;
 import org.springframework.cloud.stream.messaging.Source;
 import org.springframework.context.annotation.Bean;
-import org.springframework.integration.ip.config.TcpConnectionFactoryFactoryBean;
 import org.springframework.integration.ip.tcp.TcpReceivingChannelAdapter;
 import org.springframework.integration.ip.tcp.connection.AbstractConnectionFactory;
 import org.springframework.integration.ip.tcp.serializer.AbstractByteArraySerializer;
@@ -36,43 +36,42 @@ import org.springframework.integration.ip.tcp.serializer.AbstractByteArraySerial
  * @author Christian Tzolov
  */
 @EnableBinding(Source.class)
-@EnableConfigurationProperties({TcpSourceProperties.class, TcpConnectionFactoryProperties.class})
+@EnableConfigurationProperties({ TcpSourceProperties.class, TcpConnectionFactoryProperties.class })
 public class TcpSourceConfiguration {
 
-	@Autowired
-	private TcpSourceProperties properties;
+    @Autowired
+    private TcpSourceProperties properties;
 
-	@Autowired
-	private TcpConnectionFactoryProperties tcpConnectionProperties;
+    @Autowired
+    private TcpConnectionFactoryProperties tcpConnectionProperties;
 
-	@Bean
-	public TcpReceivingChannelAdapter adapter(
-			@Qualifier("tcpSourceConnectionFactory") AbstractConnectionFactory connectionFactory) {
-		TcpReceivingChannelAdapter adapter = new TcpReceivingChannelAdapter();
-		adapter.setConnectionFactory(connectionFactory);
-		adapter.setOutputChannelName(Source.OUTPUT);
-		return adapter;
-	}
+    @Bean
+    public TcpReceivingChannelAdapter adapter(@Qualifier("tcpSourceConnectionFactory") AbstractConnectionFactory connectionFactory) {
+        TcpReceivingChannelAdapter adapter = new TcpReceivingChannelAdapter();
+        adapter.setConnectionFactory(connectionFactory);
+        adapter.setOutputChannelName(Source.OUTPUT);
+        return adapter;
+    }
 
-	@Bean
-	public TcpConnectionFactoryFactoryBean tcpSourceConnectionFactory(
-			@Qualifier("tcpSourceDecoder") AbstractByteArraySerializer decoder) throws Exception {
-		TcpConnectionFactoryFactoryBean factoryBean = new TcpConnectionFactoryFactoryBean();
-		factoryBean.setType("server");
-		factoryBean.setPort(this.tcpConnectionProperties.getPort());
-		factoryBean.setUsingNio(this.tcpConnectionProperties.isNio());
-		factoryBean.setUsingDirectBuffers(this.tcpConnectionProperties.isUseDirectBuffers());
-		factoryBean.setLookupHost(this.tcpConnectionProperties.isReverseLookup());
-		factoryBean.setDeserializer(decoder);
-		factoryBean.setSoTimeout(this.tcpConnectionProperties.getSocketTimeout());
-		return factoryBean;
-	}
+    @Bean
+    public TcpCustomConnectionFactoryBean tcpSourceConnectionFactory(@Qualifier("tcpSourceDecoder") AbstractByteArraySerializer decoder) throws Exception {
+        TcpCustomConnectionFactoryBean factoryBean = new TcpCustomConnectionFactoryBean();
+        factoryBean.setType("server");
+        factoryBean.setBouncebackServer(this.properties.isBounceBackServer(), this.properties.getBounceBackMessage());
+        factoryBean.setPort(this.tcpConnectionProperties.getPort());
+        factoryBean.setUsingNio(this.tcpConnectionProperties.isNio());
+        factoryBean.setUsingDirectBuffers(this.tcpConnectionProperties.isUseDirectBuffers());
+        factoryBean.setLookupHost(this.tcpConnectionProperties.isReverseLookup());
+        factoryBean.setDeserializer(decoder);
+        factoryBean.setSoTimeout(this.tcpConnectionProperties.getSocketTimeout());
+        return factoryBean;
+    }
 
-	@Bean
-	public EncoderDecoderFactoryBean tcpSourceDecoder() {
-		EncoderDecoderFactoryBean factoryBean = new EncoderDecoderFactoryBean(this.properties.getDecoder());
-		factoryBean.setMaxMessageSize(this.properties.getBufferSize());
-		return factoryBean;
-	}
+    @Bean
+    public EncoderDecoderFactoryBean tcpSourceDecoder() {
+        EncoderDecoderFactoryBean factoryBean = new EncoderDecoderFactoryBean(this.properties.getDecoder());
+        factoryBean.setMaxMessageSize(this.properties.getBufferSize());
+        return factoryBean;
+    }
 
 }
